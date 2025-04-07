@@ -28,7 +28,7 @@ internal class PubgOverlayRenderer : Overlay
     private bool _hideSettingsOnDisable;
     private int _playerTeam = 1;
     private int _targetTeam = 1;
-    private bool _periodicMeasure;
+    // private bool _periodicMeasure;
     private float _distance;
     private Vector2? _testStartPos;
     private readonly OpenCvManager _openCvManager;
@@ -85,12 +85,12 @@ internal class PubgOverlayRenderer : Overlay
         if (_showSettings)//  | !_hideSettingsOnDisable)
         {
             ImGui.PushStyleColor(ImGuiCol.WindowBg, _showSettings ? new Vector4(0.3f, 0.2f, 0.3f, 0.4f) : new Vector4(0.3f, 0.2f, 0.3f, 0.0f));
-            if (_showSettings) ImGui.SetNextWindowSize(new Vector2(225, 110));
+            if (_showSettings) ImGui.SetNextWindowSize(new Vector2(205, 102));
             var exFlags = ImGuiWindowFlags.NoDecoration;
             ImGui.Begin("Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus | exFlags);
-            ImGui.Text("按下J键以手动测量距离");
-            ImGui.Text("按U键切换窗口交互");ImGui.SameLine();
-            ImGui.Checkbox("自动(L)", ref _periodicMeasure);
+            ImGui.Text("长按J键移动鼠标可手动测距");
+            ImGui.Text("按U键切换窗口可见性");
+            // ImGui.SameLine();ImGui.Checkbox("自动(L)", ref _periodicMeasure);
             ImGui.Text($"玩家: {_playerTeam}"); ImGui.SameLine();
             if (ImGui.Button("更改##PlayerTeam"))
             {
@@ -120,10 +120,10 @@ internal class PubgOverlayRenderer : Overlay
         ImGui.End();
 
 
-        if (_periodicMeasure)
-        {
-            _timer++;
-        }
+        // if (_periodicMeasure)
+        // {
+        //     _timer++;
+        // }
         
         if (_prevRecognizeTask.IsCompleted && _timer > 80)
         {
@@ -194,10 +194,10 @@ internal class PubgOverlayRenderer : Overlay
         }
         
         // 检测L键下降沿 (刚刚按下)
-        if (KeyJustPressed(KeyEnum.L))
-        {
-            _periodicMeasure = !_periodicMeasure;
-        }
+        // if (KeyJustPressed(KeyEnum.L))
+        // {
+        //     _periodicMeasure = !_periodicMeasure;
+        // }
     }
 
     private void QueueRecognize(bool smallMap = false)
