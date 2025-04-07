@@ -141,13 +141,9 @@ internal class PubgOverlayRenderer : Overlay
             _timer++;
         }
         
-        if (_timer > 80)
+        if (_prevRecognizeTask.IsCompleted && _timer > 80)
         {
             _timer = 0;
-            if (!_prevRecognizeTask.IsCompleted)
-            {
-                return;
-            }
             _prevRecognizeTask = Task.Run(() => 
             {
                 try {
@@ -191,17 +187,24 @@ internal class PubgOverlayRenderer : Overlay
         {
             drawList.AddLine(new Vector2(_screenRect.X / 2, 0), new Vector2(_screenRect.X / 2, _screenRect.Y), GetColor(_playerTeam), 1);
             drawList.AddLine(new Vector2(_screenRect.X / 2, _screenRect.Y / 2), new Vector2(_screenRect.X / 2 + 15, _screenRect.Y / 2), GetColor(_playerTeam), 1);
-            drawList.AddText(new Vector2(_screenRect.X / 2 + 18, _screenRect.Y / 2 - 10), GetColor(_playerTeam), $"{_distance:F2}");
+            drawList.AddText(new Vector2(_screenRect.X / 2 + 24, _screenRect.Y / 2 - 10), GetColor(_playerTeam), $"{_distance:F2}");
             drawList.AddText(new Vector2(_screenRect.X / 2 - 48, _screenRect.Y / 2 - 10), GetColor(_playerTeam), "水平");
-            for (var i = 2; i <= 25; i++)
+            const int screenSegments = 24;
+            for (var i = -screenSegments; i <= screenSegments; i++)
             {
-                drawList.AddLine(new Vector2(_screenRect.X / 2, _screenRect.Y / 2 - i * 21), new Vector2(_screenRect.X / 2 + 15, _screenRect.Y / 2 - i * 21), GetColor(_playerTeam), 1);
-                drawList.AddText(new Vector2(_screenRect.X / 2 + 24, _screenRect.Y / 2 - 7 - i * 21), GetColor(_playerTeam), PubgUtils.MortarDistance(PubgUtils.MortarAngle(_distance, PubgUtils.AngleToHeight(_distance, PubgUtils.IndexToAngle(i)))).ToString(CultureInfo.CurrentCulture));
-            }
-            for (var j = 2; j <= 25; j++)
-            {
-                drawList.AddLine(new Vector2(_screenRect.X / 2, _screenRect.Y / 2 + j * 21), new Vector2(_screenRect.X / 2 + 15, _screenRect.Y / 2 + j * 21), GetColor(_playerTeam), 1);
-                drawList.AddText(new Vector2(_screenRect.X / 2 + 24, _screenRect.Y / 2 - 7 + j * 21), GetColor(_playerTeam), PubgUtils.MortarDistance(PubgUtils.MortarAngle(_distance, -PubgUtils.AngleToHeight(_distance, PubgUtils.IndexToAngle(j)))).ToString(CultureInfo.CurrentCulture));
+                if (i == 0) continue;
+                const int lineLength = 15;
+                var point = new Vector2(_screenRect.X / 2, _screenRect.Y / 2 + _screenRect.Y / 2 / screenSegments * i);
+                drawList.AddLine(
+                    point, 
+                    point + new Vector2(lineLength, 0),
+                    GetColor(_playerTeam), 1);
+                drawList.AddText(point + new Vector2(24, -7), GetColor(_playerTeam),
+                    PubgUtils.MortarDistance(
+                            _distance,
+                            PubgUtils.ScreenPointToAngle((float)i / screenSegments)
+                            )
+                        .ToString("F2", CultureInfo.CurrentCulture));
             }
         }
         // else
