@@ -12,20 +12,20 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-      
+
       - name: 设置 .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
-      
+
       - name: 还原依赖
         run: dotnet restore
-      
+
       - name: 获取版本号
         id: get_version
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
+
       - name: 构建单文件应用
         run: |
           dotnet publish -c Release `
@@ -36,12 +36,22 @@ jobs:
             -p:TargetFramework=net9.0 `
             -p:RuntimeIdentifier=win-x64 `
             -o ./publish
-      
+
+      - name: 复制字体文件
+        run: |
+          if (Test-Path "assets/font.ttf") {
+            Copy-Item "assets/font.ttf" -Destination "./publish/"
+            echo "已包含字体文件"
+          } else {
+            echo "警告：找不到字体文件 assets/font.ttf"
+            exit 1
+          }
+    
       - name: 打包发布文件
         run: |
           cd publish
           7z a -tzip "../PUBG-Overlay-${{ steps.get_version.outputs.VERSION }}-win-x64.zip" *
-      
+    
       - name: 创建发布
         id: create_release
         uses: softprops/action-gh-release@v1
