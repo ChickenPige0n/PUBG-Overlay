@@ -44,7 +44,7 @@ internal class PubgOverlayRenderer : Overlay
 
     private bool IsDown(KeyEnum key)
     {
-        return (_keyStates[KeyEnum.J] & 0x8000) != 0;
+        return (_keyStates[key] & 0x8000) != 0;
     }
     
     public PubgOverlayRenderer(bool hideSettingOnDisable) : base(1920, 1080)
