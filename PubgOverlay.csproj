@@ -19,7 +19,7 @@
     </ItemGroup>
     <ItemGroup>
         <!-- 将 "assets" 下的所有内容递归复制到输出目录 -->
-        <None Include="assets\**" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="assets\**" CopyToOutputDirectory="Always" />
     </ItemGroup>
     <ItemGroup>
       <None Remove="uiaccess\uiaccess.dll" />
