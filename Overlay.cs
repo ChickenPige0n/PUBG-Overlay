@@ -22,12 +22,6 @@ internal class PubgOverlayRenderer : Overlay
     {
         GWL_EXSTYLE = -20
     }
-    
-    private enum WindowStyles : int
-    {
-        WS_EX_LAYERED = 0x80000,
-        WS_EX_TRANSPARENT = 0x20
-    }
     private readonly Vector2 _screenRect;
     private bool _showSettings = true;
     private bool _hideSettingsOnDisable;
@@ -87,9 +81,9 @@ internal class PubgOverlayRenderer : Overlay
         }
         var drawList = ImGui.GetForegroundDrawList();
         
-        if (_showSettings | !_hideSettingsOnDisable)
+        if (_showSettings)//  | !_hideSettingsOnDisable)
         {
-            ImGui.PushStyleColor(ImGuiCol.WindowBg, _showSettings ? new Vector4(0.3f, 0.2f, 0.3f, 0.0f) : new Vector4(0.3f, 0.2f, 0.3f, 0.4f) );
+            ImGui.PushStyleColor(ImGuiCol.WindowBg, _showSettings ? new Vector4(0.3f, 0.2f, 0.3f, 0.4f) : new Vector4(0.3f, 0.2f, 0.3f, 0.0f));
             if (_showSettings) ImGui.SetNextWindowSize(new Vector2(225, 110));
             var exFlags = ImGuiWindowFlags.NoDecoration;
             ImGui.Begin("Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus | exFlags);
@@ -202,16 +196,16 @@ internal class PubgOverlayRenderer : Overlay
                 drawList.AddText(point + new Vector2(24, -7), GetColor(_playerTeam),
                     PubgUtils.MortarDistance(
                             _distance,
-                            PubgUtils.ScreenPointToAngle((float)i / screenSegments)
+                            PubgUtils.ScreenPointToAngle(-(float)i / screenSegments)
                             )
-                        .ToString("F2", CultureInfo.CurrentCulture));
+                        .ToString("F0", CultureInfo.CurrentCulture));
             }
         }
-        // else
-        // {
-        //     _playerPos = null;
-        //     _targetPos = null;
-        // }
+        else
+        {
+            _playerPos = null;
+            _targetPos = null;
+        }
         
         if (KeyJustPressed(KeyEnum.U))
         {
@@ -220,7 +214,7 @@ internal class PubgOverlayRenderer : Overlay
         }
         var clickable = (WindowExStyles)GetWindowLong(window.Handle, (int)WindowLongParam.GWL_EXSTYLE);
         var notClickable = clickable | WindowExStyles.WS_EX_LAYERED | WindowExStyles.WS_EX_TRANSPARENT;
-        SetWindowLongPtr(window.Handle, (int)WindowLongPtr.GWL_EXSTYLE, _showSettings ? (int)notClickable : (int)clickable);
+        SetWindowLongPtr(window.Handle, (int)WindowLongPtr.GWL_EXSTYLE, _showSettings ? (int)clickable : (int)notClickable) ;
 
         if (IsDown(KeyEnum.J))
         {
