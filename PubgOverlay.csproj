@@ -21,6 +21,12 @@
         <!-- 将 "assets" 下的所有内容递归复制到输出目录 -->
         <None Include="assets\**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+    <ItemGroup>
+      <None Remove="uiaccess\uiaccess.dll" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="uiaccess\uiaccess.dll" />
+    </ItemGroup>
 
 
 </Project>
