@@ -20,10 +20,11 @@ internal class PubgOverlayRenderer : Overlay
     
     private enum WindowLongPtr
     {
-        GWL_EXSTYLE = -20
+        GwlExstyle = -20
     }
     private readonly Vector2 _screenRect;
     private bool _showSettings = true;
+    // ReSharper disable once NotAccessedField.Local
     private bool _hideSettingsOnDisable;
     private int _playerTeam = 1;
     private int _targetTeam = 1;
@@ -140,7 +141,6 @@ internal class PubgOverlayRenderer : Overlay
             drawList.AddRect(_targetPos.Value - size * new Vector2(0.5f, 1), _targetPos.Value + size * new Vector2(0.5f, 0f),GetColor(_targetTeam));
         }
 
-        // _distance = 530;
         if (_distance > 100)
         {
             drawList.AddLine(new Vector2(_screenRect.X / 2, 0), new Vector2(_screenRect.X / 2, _screenRect.Y), GetColor(_playerTeam), 1);
@@ -180,7 +180,7 @@ internal class PubgOverlayRenderer : Overlay
         }
         var clickable = (WindowExStyles)GetWindowLong(window.Handle, (int)WindowLongParam.GWL_EXSTYLE);
         var notClickable = clickable | WindowExStyles.WS_EX_LAYERED | WindowExStyles.WS_EX_TRANSPARENT;
-        SetWindowLongPtr(window.Handle, (int)WindowLongPtr.GWL_EXSTYLE, _showSettings ? (int)clickable : (int)notClickable) ;
+        SetWindowLongPtr(window.Handle, (int)WindowLongPtr.GwlExstyle, _showSettings ? (int)clickable : (int)notClickable) ;
 
         if (IsDown(KeyEnum.J))
         {
