@@ -102,20 +102,9 @@ internal class PubgOverlayRenderer : Overlay
                 _targetTeam = _targetTeam == 4 ? 1 : _targetTeam + 1;
             }
             
-            if (ImGui.Button("大地图开始识别(K)") || KeyJustPressed(KeyEnum.K))
+            if (ImGui.Button("大地图开始识别(K)"))
             {
-                if (!_prevRecognizeTask.IsCompleted)
-                {
-                    _prevRecognizeTask.Wait();
-                }
-                var result = _openCvManager.GetDistance(_playerTeam, _targetTeam, true);
-                
-                if (result.HasValue)
-                {
-                    _distance = (float)result.Value.distance / 1.08f;
-                    _playerPos = result.Value.playerPos;
-                    _targetPos = result.Value.targetPos;
-                }
+                QueueRecognize();
             }
             ImGui.End();
             ImGui.PopStyleColor();
@@ -138,32 +127,7 @@ internal class PubgOverlayRenderer : Overlay
         if (_prevRecognizeTask.IsCompleted && _timer > 80)
         {
             _timer = 0;
-            _prevRecognizeTask = Task.Run(() => 
-            {
-                try {
-                    var result = _openCvManager.GetDistance(_playerTeam, _targetTeam);
-                    if (result.HasValue)
-                    {
-                        lock (this) // 同步访问共享变量
-                        {
-                            _distance = ((float)result.Value.distance / 1.08f) / 0.6f;
-                            var mapPos = OpenCvManager.MapPos;
-                            _playerPos = result.Value.playerPos + new Vector2(mapPos.X, mapPos.Y);
-                            _targetPos = result.Value.targetPos + new Vector2(mapPos.X, mapPos.Y);
-                        }
-                    }
-                    else
-                    {
-                        lock (this)
-                        {
-                            _playerPos = null;
-                            _targetPos = null;
-                        }
-                    }
-                } catch (Exception e) {
-                    Console.WriteLine(e);
-                }
-            });
+            QueueRecognize(true);
         }
         if (_playerPos.HasValue)
         {
@@ -206,6 +170,8 @@ internal class PubgOverlayRenderer : Overlay
             _playerPos = null;
             _targetPos = null;
         }
+        if (KeyJustPressed(KeyEnum.K))
+            QueueRecognize();
         
         if (KeyJustPressed(KeyEnum.U))
         {
@@ -233,6 +199,42 @@ internal class PubgOverlayRenderer : Overlay
             _periodicMeasure = !_periodicMeasure;
         }
     }
+
+    private void QueueRecognize(bool smallMap = false)
+    {
+        if (!_prevRecognizeTask.IsCompleted)
+        {
+            _prevRecognizeTask.Wait();
+        }
+        _prevRecognizeTask = Task.Run(() => 
+        {
+            try {
+                var result = _openCvManager.GetDistance(_playerTeam, _targetTeam);
+                if (result.HasValue)
+                {
+                    lock (this) // 同步访问共享变量
+                    {
+                        _distance = ((float)result.Value.distance / 1.08f);
+                        if (smallMap) _distance /= 0.6f;
+                        var mapPos = OpenCvManager.MapPos;
+                        _playerPos = result.Value.playerPos + new Vector2(mapPos.X, mapPos.Y);
+                        _targetPos = result.Value.targetPos + new Vector2(mapPos.X, mapPos.Y);
+                    }
+                }
+                else
+                {
+                    lock (this)
+                    {
+                        _playerPos = null;
+                        _targetPos = null;
+                    }
+                }
+            } catch (Exception e) {
+                Console.WriteLine(e);
+            }
+        });
+    }
+
     // ABGR format
     private static uint GetColor(int team)
     {
