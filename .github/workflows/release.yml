@@ -40,7 +40,7 @@ jobs:
       - name: 复制字体文件
         run: |
           if (Test-Path "assets/font.ttf") {
-            Copy-Item "assets/font.ttf" -Destination "./publish/"
+            Copy-Item "assets/font.ttf" -Destination "./publish/assets"
             echo "已包含字体文件"
           } else {
             echo "警告：找不到字体文件 assets/font.ttf"
