@@ -20,8 +20,8 @@ public class OpenCvManager
         TargetTemplates.Add(new Mat());
         foreach (var i in Enumerable.Range(1, 4))
         {
-            PlayerTemplates.Add(Cv2.ImRead($"person1K_{i}.png"));
-            TargetTemplates.Add(Cv2.ImRead($"point1K_{i}.png"));
+            PlayerTemplates.Add(Cv2.ImRead($"assets/person1K_{i}.png"));
+            TargetTemplates.Add(Cv2.ImRead($"assets/point1K_{i}.png"));
         }
     }
 

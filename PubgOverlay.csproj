@@ -17,5 +17,10 @@
       <PackageReference Include="ScreenCapture.NET" Version="3.0.0" />
       <PackageReference Include="ScreenCapture.NET.DX11" Version="3.0.0" />
     </ItemGroup>
+    <ItemGroup>
+        <!-- 将 "assets" 下的所有内容递归复制到输出目录 -->
+        <None Include="assets\**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
 
 </Project>

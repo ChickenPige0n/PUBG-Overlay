@@ -18,7 +18,7 @@ if (isUiAccess)
     }
 }
 using var overlay = new PubgOverlayRenderer(hideSettingsOnDisable);
-overlay.ReplaceFont("font.ttf", 15, FontGlyphRangeType.ChineseFull);
+overlay.ReplaceFont("assets/font.ttf", 15, FontGlyphRangeType.ChineseFull);
 await overlay.Run();
 return;
 
