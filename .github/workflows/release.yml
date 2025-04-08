@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 禁用浅克隆，获取完整的 Git 历史记录
 
       - name: 设置 .NET
         uses: actions/setup-dotnet@v3
