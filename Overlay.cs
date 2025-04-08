@@ -47,9 +47,14 @@ internal class PubgOverlayRenderer : Overlay
     {
         return (_keyStates[key] & 0x8000) != 0;
     }
+    private readonly string? _updateUrl;
     
-    public PubgOverlayRenderer(bool hideSettingOnDisable) : base(1920, 1080)
+    public PubgOverlayRenderer(bool hideSettingOnDisable, string? updateUrl = null) : base(1920, 1080)
     {
+        if (!string.IsNullOrEmpty(updateUrl))
+        {
+            _updateUrl = updateUrl;
+        }
         _hideSettingsOnDisable = hideSettingOnDisable;
         _screenRect = new Vector2(1920, 1080);
         _openCvManager = new OpenCvManager();
@@ -85,7 +90,7 @@ internal class PubgOverlayRenderer : Overlay
         if (_showSettings)//  | !_hideSettingsOnDisable)
         {
             ImGui.PushStyleColor(ImGuiCol.WindowBg, _showSettings ? new Vector4(0.3f, 0.2f, 0.3f, 0.4f) : new Vector4(0.3f, 0.2f, 0.3f, 0.0f));
-            if (_showSettings) ImGui.SetNextWindowSize(new Vector2(205, 102));
+            ImGui.SetNextWindowSize(new Vector2(205, _updateUrl != null ? 122 : 102));
             const ImGuiWindowFlags exFlags = ImGuiWindowFlags.NoDecoration;
             ImGui.Begin("Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus | exFlags);
             ImGui.Text("长按J键移动鼠标可手动测距");
@@ -107,6 +112,21 @@ internal class PubgOverlayRenderer : Overlay
             {
                 QueueRecognize();
             }
+            
+            if (_updateUrl != null)
+            {
+                ImGui.Text("检测到新版本");
+                ImGui.SameLine();
+                if (ImGui.Button("去下载"))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = _updateUrl,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            
             ImGui.End();
             ImGui.PopStyleColor();
         }
