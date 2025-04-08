@@ -30,7 +30,7 @@ internal class PubgOverlayRenderer : Overlay
     private float _distance;
     private Vector2? _testStartPos;
     private readonly OpenCvManager _openCvManager;
-    private Task _prevRecognizeTask;
+    private Task _recognizeTask;
     
     private Vector2? _playerPos;
     private Vector2? _targetPos;
@@ -49,16 +49,13 @@ internal class PubgOverlayRenderer : Overlay
     
     public PubgOverlayRenderer(bool hideSettingOnDisable, string? updateUrl = null) : base(1920, 1080)
     {
-        var screenSize = ScreenReader.GetDisplaySize();
-        Size = new System.Drawing.Size(screenSize.width, screenSize.height);
-        _scaleFactor = new Vector2(Size.Width, Size.Height) / new Vector2(1920, 1080);
         if (!string.IsNullOrEmpty(updateUrl))
         {
             _updateUrl = updateUrl;
         }
         _hideSettingsOnDisable = hideSettingOnDisable;
         _openCvManager = new OpenCvManager();
-        _prevRecognizeTask = Task.CompletedTask;
+        _recognizeTask = Task.CompletedTask;
         FPSLimit = 144;
     }
 
@@ -66,7 +63,6 @@ internal class PubgOverlayRenderer : Overlay
     {
         var screenSize = ScreenReader.GetDisplaySize();
         Size = new System.Drawing.Size(screenSize.width, screenSize.height);
-        _scaleFactor = new Vector2(Size.Width, Size.Height) / new Vector2(1920, 1080);
         return Task.CompletedTask;
     }
 
@@ -142,10 +138,15 @@ internal class PubgOverlayRenderer : Overlay
         ImGui.End();
         
         
-        if (_prevRecognizeTask.IsCompleted && _timer > 80)
+        if (_recognizeTask.IsCompleted && _timer > 80)
         {
             _timer = 0;
             QueueRecognize(true);
+        }
+
+        if (!_recognizeTask.IsCompleted)
+        {
+            drawList.AddLine(Vector2.Zero, new Vector2(Size.Width, 0), GetColor(_playerTeam), 3);
         }
         if (_playerPos.HasValue)
         {
@@ -210,21 +211,23 @@ internal class PubgOverlayRenderer : Overlay
             _testStartPos = null;
         }
     }
-    private Vector2 _scaleFactor;
     private void QueueRecognize(bool smallMap = false)
     {
         _playerPos = null;
         _targetPos = null;
         _distance = 0;
         Console.WriteLine("QueueRecognize");
-        if (!_prevRecognizeTask.IsCompleted)
+        if (!_recognizeTask.IsCompleted)
         {
-            _prevRecognizeTask.Wait();
+            _recognizeTask.Wait();
         }
-        _prevRecognizeTask = Task.Run(() => 
+        
+        _recognizeTask = Task.Run(() =>
         {
-            try {
-                var result = _openCvManager.GetDistance(_playerTeam, _targetTeam, !smallMap);
+            try
+            {
+                var result = _openCvManager.GetDistance(_playerTeam, _targetTeam, Size, !smallMap);
+                GC.Collect();
                 if (result.HasValue)
                 {
                     Console.WriteLine($"  playerPos: {result.Value.playerPos}");
@@ -246,7 +249,9 @@ internal class PubgOverlayRenderer : Overlay
                         _targetPos = null;
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Console.WriteLine(e);
             }
         });

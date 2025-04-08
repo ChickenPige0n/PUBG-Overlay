@@ -44,14 +44,14 @@ public class OpenCvManager
     }
 
     public (double distance, Vector2 playerPos, Vector2 targetPos)? GetDistance(int playerIndex, int targetIndex,
-        bool fullScreen = false)
+        System.Drawing.Size size, bool fullScreen = false)
     {
         var playerTemplate = GetTemplate(1, playerIndex);
         var targetTemplate = GetTemplate(2, targetIndex);
         var beginX = fullScreen ? 0 : MapPos.X;
         var beginY = fullScreen ? 0 : MapPos.Y;
-        var sizeX = fullScreen ? 1920 : MapSize.Width;
-        var sizeY = fullScreen ? 1080 : MapSize.Height;
+        var sizeX = fullScreen ? size.Height : MapSize.Width;
+        var sizeY = fullScreen ? size.Width : MapSize.Height;
 
         var mapMat = ScreenReader.Capture(beginX, beginY, sizeX, sizeY);
         var playerMatLeach = LeachColor(mapMat, playerIndex);
@@ -87,12 +87,18 @@ public class OpenCvManager
         tOffset.X /= 2;
         var pOffset = PlayerTemplateSize(playerIndex);
         pOffset.X /= 2;
-        var playerPos = new Point();
-        playerPos.X = playerMaxLoc.X + (int)Math.Round(pOffset.X);
-        playerPos.Y = playerMaxLoc.Y + (int)Math.Round(pOffset.Y);
-        var targetPos = new Point();
-        targetPos.X = targetMaxLoc.X + (int)Math.Round(tOffset.X);
-        targetPos.Y = targetMaxLoc.Y + (int)Math.Round(tOffset.Y);
+        var playerPos = new Point
+        {
+            X = playerMaxLoc.X + (int)Math.Round(pOffset.X),
+            Y = playerMaxLoc.Y + (int)Math.Round(pOffset.Y)
+        };
+        var targetPos = new Point
+        {
+            X = targetMaxLoc.X + (int)Math.Round(tOffset.X),
+            Y = targetMaxLoc.Y + (int)Math.Round(tOffset.Y)
+        };
+        // TODO: support different screen resolution
+        // var scaleFactor = new Vector2(size.Width, size.Height) / new Vector2(1920, 1080);
         return (playerPos.DistanceTo(targetPos), P2V(playerPos), P2V(targetPos));
     }
 
