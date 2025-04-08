@@ -1,3 +1,4 @@
+using System.Numerics;
 using HPPH;
 using OpenCvSharp;
 namespace PubgOverlay;
@@ -7,22 +8,29 @@ public class ScreenReader
 {
     
     public static ScreenReader Instance { get; } = new();
-    private static IScreenCaptureService? _screenCaptureService;
-    public ScreenReader()
+    private static readonly IScreenCaptureService ScreenCaptureService;
+    static ScreenReader()
     {
-        _screenCaptureService = new DX11ScreenCaptureService();
+        ScreenCaptureService = new DX11ScreenCaptureService();
+    }
+
+    public static (int width, int height) GetDisplaySize()
+    {
+        var display = ScreenCaptureService.GetDisplays(ScreenCaptureService.GetGraphicsCards().First()).First();
+        return (display.Width, display.Height);
     }
     
     public static Mat Capture(int beginX, int beginY, int sizeX, int sizeY)
     {
         // Get all available graphics cards
-        var graphicsCards = _screenCaptureService!.GetGraphicsCards();
+        var graphicsCards = ScreenCaptureService.GetGraphicsCards();
         
         // Get the displays from the graphics card(s) you are interested in
-        var displays = _screenCaptureService.GetDisplays(graphicsCards.First());
+        var displays = ScreenCaptureService.GetDisplays(graphicsCards.First());
 
         // Create a screen-capture for all screens you want to capture
-        var screenCapture = _screenCaptureService.GetScreenCapture(displays.First());
+        var screenCapture = ScreenCaptureService.GetScreenCapture(displays.First());
+
         
         var partialArea = screenCapture.RegisterCaptureZone(beginX, beginY, sizeX, sizeY);
         

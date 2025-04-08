@@ -22,13 +22,11 @@ internal class PubgOverlayRenderer : Overlay
     {
         GwlExstyle = -20
     }
-    private readonly Vector2 _screenRect;
     private bool _showSettings = true;
     // ReSharper disable once NotAccessedField.Local
     private bool _hideSettingsOnDisable;
     private int _playerTeam = 1;
     private int _targetTeam = 1;
-    // private bool _periodicMeasure;
     private float _distance;
     private Vector2? _testStartPos;
     private readonly OpenCvManager _openCvManager;
@@ -51,12 +49,14 @@ internal class PubgOverlayRenderer : Overlay
     
     public PubgOverlayRenderer(bool hideSettingOnDisable, string? updateUrl = null) : base(1920, 1080)
     {
+        var screenSize = ScreenReader.GetDisplaySize();
+        Size = new System.Drawing.Size(screenSize.width, screenSize.height);
+        _scaleFactor = new Vector2(Size.Width, Size.Height) / new Vector2(1920, 1080);
         if (!string.IsNullOrEmpty(updateUrl))
         {
             _updateUrl = updateUrl;
         }
         _hideSettingsOnDisable = hideSettingOnDisable;
-        _screenRect = new Vector2(1920, 1080);
         _openCvManager = new OpenCvManager();
         _prevRecognizeTask = Task.CompletedTask;
         FPSLimit = 144;
@@ -64,6 +64,9 @@ internal class PubgOverlayRenderer : Overlay
 
     protected override Task PostInitialized()
     {
+        var screenSize = ScreenReader.GetDisplaySize();
+        Size = new System.Drawing.Size(screenSize.width, screenSize.height);
+        _scaleFactor = new Vector2(Size.Width, Size.Height) / new Vector2(1920, 1080);
         return Task.CompletedTask;
     }
 
@@ -87,7 +90,7 @@ internal class PubgOverlayRenderer : Overlay
         }
         var drawList = ImGui.GetForegroundDrawList();
         
-        if (_showSettings)//  | !_hideSettingsOnDisable)
+        if (_showSettings)
         {
             ImGui.PushStyleColor(ImGuiCol.WindowBg, _showSettings ? new Vector4(0.3f, 0.2f, 0.3f, 0.4f) : new Vector4(0.3f, 0.2f, 0.3f, 0.0f));
             ImGui.SetNextWindowSize(new Vector2(205, _updateUrl != null ? 122 : 102));
@@ -95,7 +98,6 @@ internal class PubgOverlayRenderer : Overlay
             ImGui.Begin("Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus | exFlags);
             ImGui.Text("长按J键移动鼠标可手动测距");
             ImGui.Text("按U键切换窗口可见性");
-            // ImGui.SameLine();ImGui.Checkbox("自动(L)", ref _periodicMeasure);
             ImGui.Text($"玩家: {_playerTeam}"); ImGui.SameLine();
             if (ImGui.Button("更改##PlayerTeam"))
             {
@@ -138,12 +140,7 @@ internal class PubgOverlayRenderer : Overlay
             ImGui.Text($"距离: {_distance:F2} 米");
         }
         ImGui.End();
-
-
-        // if (_periodicMeasure)
-        // {
-        //     _timer++;
-        // }
+        
         
         if (_prevRecognizeTask.IsCompleted && _timer > 80)
         {
@@ -163,16 +160,16 @@ internal class PubgOverlayRenderer : Overlay
 
         if (_distance > 100)
         {
-            drawList.AddLine(new Vector2(_screenRect.X / 2, 0), new Vector2(_screenRect.X / 2, _screenRect.Y), GetColor(_playerTeam), 1);
-            drawList.AddLine(new Vector2(_screenRect.X / 2, _screenRect.Y / 2), new Vector2(_screenRect.X / 2 + 15, _screenRect.Y / 2), GetColor(_playerTeam), 1);
-            drawList.AddText(new Vector2(_screenRect.X / 2 + 24, _screenRect.Y / 2 - 10), GetColor(_playerTeam), $"{_distance:F2}");
-            drawList.AddText(new Vector2(_screenRect.X / 2 - 48, _screenRect.Y / 2 - 10), GetColor(_playerTeam), "水平");
+            drawList.AddLine(new Vector2(Size.Width / 2.0f, 0), new Vector2(Size.Width / 2.0f, Size.Height), GetColor(_playerTeam), 1);
+            drawList.AddLine(new Vector2(Size.Width / 2.0f, Size.Height / 2.0f), new Vector2(Size.Width / 2.0f + 15, Size.Height / 2.0f), GetColor(_playerTeam), 1);
+            drawList.AddText(new Vector2(Size.Width / 2.0f + 24, Size.Height / 2.0f - 10), GetColor(_playerTeam), $"{_distance:F2}");
+            drawList.AddText(new Vector2(Size.Width / 2.0f - 48, Size.Height / 2.0f - 10), GetColor(_playerTeam), "水平");
             const int screenSegments = 24;
             for (var i = -screenSegments; i <= screenSegments; i++)
             {
                 if (i == 0) continue;
                 const int lineLength = 15;
-                var point = new Vector2(_screenRect.X / 2, _screenRect.Y / 2 + _screenRect.Y / 2 / screenSegments * i);
+                var point = new Vector2(Size.Width / 2.0f, Size.Height / 2.0f + Size.Height / 2.0f / screenSegments * i);
                 drawList.AddLine(
                     point, 
                     point + new Vector2(lineLength, 0),
@@ -185,11 +182,11 @@ internal class PubgOverlayRenderer : Overlay
                         .ToString("F0", CultureInfo.CurrentCulture));
             }
         }
-        // else
-        // {
-        //     _playerPos = null;
-        //     _targetPos = null;
-        // }
+        else
+        {
+            _playerPos = null;
+            _targetPos = null;
+        }
         if (KeyJustPressed(KeyEnum.K))
             QueueRecognize();
         
@@ -212,14 +209,8 @@ internal class PubgOverlayRenderer : Overlay
         {
             _testStartPos = null;
         }
-        
-        // 检测L键下降沿 (刚刚按下)
-        // if (KeyJustPressed(KeyEnum.L))
-        // {
-        //     _periodicMeasure = !_periodicMeasure;
-        // }
     }
-
+    private Vector2 _scaleFactor;
     private void QueueRecognize(bool smallMap = false)
     {
         _playerPos = null;
@@ -239,7 +230,7 @@ internal class PubgOverlayRenderer : Overlay
                     Console.WriteLine($"  playerPos: {result.Value.playerPos}");
                     Console.WriteLine($"  targetPos: {result.Value.targetPos}");
                     Console.WriteLine($"  distance: {result.Value.distance}");
-                    lock (this) // 同步访问共享变量
+                    lock (this)
                     {
                         _distance = (float)result.Value.distance / 1.08f / (smallMap ? 0.6f : 1.0f);
                         var mapPos = OpenCvManager.MapPos * (smallMap ? 1 : 0);

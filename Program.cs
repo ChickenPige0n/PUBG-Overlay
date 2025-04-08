@@ -34,7 +34,6 @@ string? updateUrl = null;
         if (release != null)
         {
             var latestVersion = new Version(release.TagName.Replace("v", ""));
-            // 比较当前版本和最新版本
             if (latestVersion > currentVersion)
             {
                 Console.WriteLine($"发现新版本：{release.TagName}，请访问以下链接下载更新：");
@@ -73,7 +72,6 @@ overlay.ReplaceFont("assets/font.ttf", 15, FontGlyphRangeType.ChineseFull);
 await overlay.Run();
 
 
-// GitHub Releases API 返回的 JSON 结构
 public class GitHubRelease
 {
     [JsonPropertyName("tag_name")]
