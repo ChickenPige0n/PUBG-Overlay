@@ -86,7 +86,7 @@ internal class PubgOverlayRenderer : Overlay
         {
             ImGui.PushStyleColor(ImGuiCol.WindowBg, _showSettings ? new Vector4(0.3f, 0.2f, 0.3f, 0.4f) : new Vector4(0.3f, 0.2f, 0.3f, 0.0f));
             if (_showSettings) ImGui.SetNextWindowSize(new Vector2(205, 102));
-            var exFlags = ImGuiWindowFlags.NoDecoration;
+            const ImGuiWindowFlags exFlags = ImGuiWindowFlags.NoDecoration;
             ImGui.Begin("Settings", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus | exFlags);
             ImGui.Text("长按J键移动鼠标可手动测距");
             ImGui.Text("按U键切换窗口可见性");
@@ -165,11 +165,11 @@ internal class PubgOverlayRenderer : Overlay
                         .ToString("F0", CultureInfo.CurrentCulture));
             }
         }
-        else
-        {
-            _playerPos = null;
-            _targetPos = null;
-        }
+        // else
+        // {
+        //     _playerPos = null;
+        //     _targetPos = null;
+        // }
         if (KeyJustPressed(KeyEnum.K))
             QueueRecognize();
         
@@ -202,6 +202,10 @@ internal class PubgOverlayRenderer : Overlay
 
     private void QueueRecognize(bool smallMap = false)
     {
+        _playerPos = null;
+        _targetPos = null;
+        _distance = 0;
+        Console.WriteLine("QueueRecognize");
         if (!_prevRecognizeTask.IsCompleted)
         {
             _prevRecognizeTask.Wait();
@@ -209,14 +213,16 @@ internal class PubgOverlayRenderer : Overlay
         _prevRecognizeTask = Task.Run(() => 
         {
             try {
-                var result = _openCvManager.GetDistance(_playerTeam, _targetTeam);
+                var result = _openCvManager.GetDistance(_playerTeam, _targetTeam, !smallMap);
                 if (result.HasValue)
                 {
+                    Console.WriteLine($"  playerPos: {result.Value.playerPos}");
+                    Console.WriteLine($"  targetPos: {result.Value.targetPos}");
+                    Console.WriteLine($"  distance: {result.Value.distance}");
                     lock (this) // 同步访问共享变量
                     {
-                        _distance = ((float)result.Value.distance / 1.08f);
-                        if (smallMap) _distance /= 0.6f;
-                        var mapPos = OpenCvManager.MapPos;
+                        _distance = (float)result.Value.distance / 1.08f / (smallMap ? 0.6f : 1.0f);
+                        var mapPos = OpenCvManager.MapPos * (smallMap ? 1 : 0);
                         _playerPos = result.Value.playerPos + new Vector2(mapPos.X, mapPos.Y);
                         _targetPos = result.Value.targetPos + new Vector2(mapPos.X, mapPos.Y);
                     }
