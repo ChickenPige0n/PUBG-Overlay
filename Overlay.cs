@@ -151,12 +151,12 @@ internal class PubgOverlayRenderer : Overlay
         }
         if (_playerPos.HasValue)
         {
-            var size = _openCvManager.PlayerTemplateSize(_playerTeam);
+            var size = _openCvManager.PlayerTemplateSize(_playerTeam - 1);
             drawList.AddRect(_playerPos.Value - size * new Vector2(0.5f, 1), _playerPos.Value + size * new Vector2(0.5f, 0f),GetColor(_playerTeam));
         }
         if (_targetPos.HasValue)
         {
-            var size = _openCvManager.TargetTemplateSize(_targetTeam);
+            var size = _openCvManager.TargetTemplateSize(_targetTeam - 1);
             drawList.AddRect(_targetPos.Value - size * new Vector2(0.5f, 1), _targetPos.Value + size * new Vector2(0.5f, 0f),GetColor(_targetTeam));
         }
 
@@ -227,7 +227,7 @@ internal class PubgOverlayRenderer : Overlay
         {
             try
             {
-                var result = _openCvManager.GetDistance(_playerTeam, _targetTeam, Size, !smallMap);
+                var result = _openCvManager.GetDistance(_playerTeam - 1, _targetTeam - 1, Size, !smallMap);
                 GC.Collect();
                 if (result.HasValue)
                 {

@@ -8,8 +8,8 @@ namespace PubgOverlay;
 
 public class OpenCvManager
 {
-    public static readonly Point MapPos = new Point(1430, 593);
-    public static readonly Size MapSize = new Size(457, 457);
+    public static readonly Point MapPos = new(1430, 593);
+    public static readonly Size MapSize = new(457, 457);
 
     public List<Mat> PlayerTemplates { get; } = [];
     public List<Mat> TargetTemplates { get; } = [];
@@ -19,19 +19,35 @@ public class OpenCvManager
     {
         PlayerTemplates.Add(new Mat());
         TargetTemplates.Add(new Mat());
-        foreach (var i in Enumerable.Range(1, 4))
-        {
-            PlayerTemplates.Add(CvInvoke.Imread($"assets/person1K_{i}.png"));
-            TargetTemplates.Add(CvInvoke.Imread($"assets/point1K_{i}.png"));
-        }
+        var allMat = CvInvoke.Imread($"assets/persons_1K.png");
+        PlayerTemplates =
+        [
+            new Mat(allMat, new Rectangle(0, 0, 18, 18)),
+            new Mat(allMat, new Rectangle(18, 0, 18, 18)),
+            new Mat(allMat, new Rectangle(36, 0, 18, 18)),
+            new Mat(allMat, new Rectangle(54, 0, 18, 18))
+        ];
+        allMat = CvInvoke.Imread($"assets/points_1K.png");
+        TargetTemplates =
+        [
+            new Mat(allMat, new Rectangle(0, 0, 16, 20)),
+            new Mat(allMat, new Rectangle(16, 0, 16, 20)),
+            new Mat(allMat, new Rectangle(32, 0, 16, 20)),
+            new Mat(allMat, new Rectangle(48, 0, 16, 20))
+        ];
     }
 
-    public Mat GetTemplate(int type, int index)
+    public enum TemplateType
+    {
+        Player = 1,
+        Target = 2
+    }
+    public Mat GetTemplate(TemplateType type, int index)
     {
         return type switch
         {
-            1 => PlayerTemplates[index].Clone(),
-            2 => TargetTemplates[index].Clone(),
+            TemplateType.Player => PlayerTemplates[index].Clone(),
+            TemplateType.Target => TargetTemplates[index].Clone(),
             _ => new Mat()
         };
     }
@@ -49,8 +65,8 @@ public class OpenCvManager
     public (double distance, Vector2 playerPos, Vector2 targetPos)? GetDistance(int playerIndex, int targetIndex,
         Size size, bool fullScreen = false)
     {
-        using var playerTemplate = GetTemplate(1, playerIndex);
-        using var targetTemplate = GetTemplate(2, targetIndex);
+        using var playerTemplate = GetTemplate(TemplateType.Player, playerIndex);
+        using var targetTemplate = GetTemplate(TemplateType.Target, targetIndex);
         var beginX = fullScreen ? 100 : MapPos.X;
         var beginY = fullScreen ? 100 : MapPos.Y;
         var sizeX = fullScreen ? size.Height : MapSize.Width;
@@ -65,14 +81,14 @@ public class OpenCvManager
         var minLoc = new Point();
         var playerMaxLoc = new Point();
         var playerMax = 0.0;
-        CvInvoke.MinMaxLoc(playerResultMat, ref minVal,   ref playerMax, ref minLoc, ref playerMaxLoc);
+        CvInvoke.MinMaxLoc(playerResultMat, ref minVal, ref playerMax, ref minLoc, ref playerMaxLoc);
 
         using var targetResultMat = new Mat();
         CvInvoke.MatchTemplate(leachedMap, targetTemplate, targetResultMat, TemplateMatchingType.CcoeffNormed);
 
         var targetMaxLoc = new Point();
         var targetMax = 0.0;
-        CvInvoke.MinMaxLoc(targetResultMat, ref minVal, ref targetMax , ref minLoc, ref targetMaxLoc);
+        CvInvoke.MinMaxLoc(targetResultMat, ref minVal, ref targetMax, ref minLoc, ref targetMaxLoc);
 
         mapMat.Dispose();
 
@@ -137,10 +153,10 @@ public class OpenCvManager
         CvInvoke.CvtColor(inputImage, rgbImage, ColorConversion.Bgra2Rgb);
         using var hsvImage = new Mat();
         CvInvoke.CvtColor(rgbImage, hsvImage, ColorConversion.Rgb2Hsv);
-        
+
         using var mask = new Mat();
         CvInvoke.InRange(hsvImage, lower, upper, mask);
-        
+
         using var resultRgba = new Mat();
         CvInvoke.BitwiseAnd(inputImage, inputImage, resultRgba, mask);
         using var resultRgb = new Mat();
