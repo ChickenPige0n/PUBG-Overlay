@@ -1,5 +1,8 @@
+using System.Drawing;
 using System.Numerics;
-using OpenCvSharp;
+using Emgu.CV;
+using Emgu.CV.CvEnum;
+using Emgu.CV.Structure;
 
 namespace PubgOverlay;
 
@@ -18,8 +21,8 @@ public class OpenCvManager
         TargetTemplates.Add(new Mat());
         foreach (var i in Enumerable.Range(1, 4))
         {
-            PlayerTemplates.Add(Cv2.ImRead($"assets/person1K_{i}.png"));
-            TargetTemplates.Add(Cv2.ImRead($"assets/point1K_{i}.png"));
+            PlayerTemplates.Add(CvInvoke.Imread($"assets/person1K_{i}.png"));
+            TargetTemplates.Add(CvInvoke.Imread($"assets/point1K_{i}.png"));
         }
     }
 
@@ -35,43 +38,43 @@ public class OpenCvManager
 
     public Vector2 PlayerTemplateSize(int team)
     {
-        return S2V(PlayerTemplates[team].Size());
+        return S2V(new Size(PlayerTemplates[team].Cols, PlayerTemplates[team].Rows));
     }
 
     public Vector2 TargetTemplateSize(int team)
     {
-        return S2V(TargetTemplates[team].Size());
+        return S2V(new Size(TargetTemplates[team].Cols, TargetTemplates[team].Rows));
     }
 
     public (double distance, Vector2 playerPos, Vector2 targetPos)? GetDistance(int playerIndex, int targetIndex,
-        System.Drawing.Size size, bool fullScreen = false)
+        Size size, bool fullScreen = false)
     {
-        var playerTemplate = GetTemplate(1, playerIndex);
-        var targetTemplate = GetTemplate(2, targetIndex);
+        using var playerTemplate = GetTemplate(1, playerIndex);
+        using var targetTemplate = GetTemplate(2, targetIndex);
         var beginX = fullScreen ? 0 : MapPos.X;
         var beginY = fullScreen ? 0 : MapPos.Y;
         var sizeX = fullScreen ? size.Height : MapSize.Width;
         var sizeY = fullScreen ? size.Width : MapSize.Height;
 
         var mapMat = ScreenReader.Capture(beginX, beginY, sizeX, sizeY);
-        var playerMatLeach = LeachColor(mapMat, playerIndex);
-        var targetMatLeach = LeachColor(mapMat, targetIndex);
+        using var leachedMap = LeachColor(mapMat);
 
-        var playerResultMat = new Mat();
-        Cv2.MatchTemplate(playerMatLeach, playerTemplate, playerResultMat, TemplateMatchModes.CCoeffNormed);
-        Cv2.MinMaxLoc(playerResultMat, out _, out var playerMax, out _, out var playerMaxLoc);
+        using var playerResultMat = new Mat();
+        CvInvoke.MatchTemplate(leachedMap, playerTemplate, playerResultMat, TemplateMatchingType.CcoeffNormed);
+        var minVal = 0.0;
+        var minLoc = new Point();
+        var playerMaxLoc = new Point();
+        var playerMax = 0.0;
+        CvInvoke.MinMaxLoc(playerResultMat, ref minVal,   ref playerMax, ref minLoc, ref playerMaxLoc);
 
-        var targetResultMat = new Mat();
-        Cv2.MatchTemplate(targetMatLeach, targetTemplate, targetResultMat, TemplateMatchModes.CCoeffNormed);
-        Cv2.MinMaxLoc(targetResultMat, out _, out var targetMax, out _, out var targetMaxLoc);
+        using var targetResultMat = new Mat();
+        CvInvoke.MatchTemplate(leachedMap, targetTemplate, targetResultMat, TemplateMatchingType.CcoeffNormed);
+
+        var targetMaxLoc = new Point();
+        var targetMax = 0.0;
+        CvInvoke.MinMaxLoc(targetResultMat, ref minVal, ref targetMax , ref minLoc, ref targetMaxLoc);
 
         mapMat.Dispose();
-        playerResultMat.Dispose();
-        targetResultMat.Dispose();
-        playerMatLeach.Dispose();
-        targetMatLeach.Dispose();
-        playerTemplate.Dispose();
-        targetTemplate.Dispose();
 
         if (targetMax < 0.5 || playerMax < 0.5)
         {
@@ -99,7 +102,12 @@ public class OpenCvManager
         };
         // TODO: support different screen resolution
         // var scaleFactor = new Vector2(size.Width, size.Height) / new Vector2(1920, 1080);
-        return (playerPos.DistanceTo(targetPos), P2V(playerPos), P2V(targetPos));
+        return (PointDistance(playerPos, targetPos), P2V(playerPos), P2V(targetPos));
+    }
+
+    private static double PointDistance(Point a, Point b)
+    {
+        return double.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
     }
 
     // point to vector 2 conversion
@@ -119,44 +127,24 @@ public class OpenCvManager
     /// 去除mat杂色
     /// </summary>
     /// <param name="inputImage">传递的mat图像</param>
-    /// <param name="colorIndex">希望保留的颜色</param>
     /// <returns>去除杂色后的mat图像</returns>
-    public static Mat LeachColor(Mat inputImage, int colorIndex)
+    public static Mat LeachColor(Mat inputImage)
     {
-        Scalar lower;
-        Scalar upper;
-        switch (colorIndex)
-        {
-            case 2:
-                lower = new Scalar(10, 100, 100);
-                upper = new Scalar(15, 255, 255);
-                break;
-            case 3:
-                lower = new Scalar(100, 100, 100);
-                upper = new Scalar(124, 255, 255);
-                break;
-            case 4:
-                lower = new Scalar(60, 100, 100);
-                upper = new Scalar(100, 255, 255);
-                break;
-            default:
-                lower = new Scalar(25, 100, 100);
-                upper = new Scalar(30, 255, 255);
-                break;
-        }
+        var lower = new ScalarArray(new MCvScalar(1.0, 100.0, 100.0));
+        var upper = new ScalarArray(new MCvScalar(109.0, 255.0, 255.0));
 
-        //转换到HSV色彩空间
-        var rgbImage = inputImage.CvtColor(ColorConversionCodes.BGRA2RGB);
-        var hsvImage = rgbImage.CvtColor(ColorConversionCodes.RGB2HSV);
-        //创建Mask
-        var hsvImageMask = new Mat();
-        Cv2.InRange(hsvImage, lower, upper, hsvImageMask);
-        //应用Mask
-        var resultHsv = new Mat();
-        Cv2.BitwiseAnd(inputImage, inputImage, resultHsv, hsvImageMask);
-        rgbImage.Dispose();
-        hsvImageMask.Dispose();
-        hsvImage.Dispose();
-        return resultHsv.CvtColor(ColorConversionCodes.RGBA2RGB);
+        using var rgbImage = new Mat();
+        CvInvoke.CvtColor(inputImage, rgbImage, ColorConversion.Bgra2Rgb);
+        using var hsvImage = new Mat();
+        CvInvoke.CvtColor(rgbImage, hsvImage, ColorConversion.Rgb2Hsv);
+        
+        using var mask = new Mat();
+        CvInvoke.InRange(hsvImage, lower, upper, mask);
+        
+        using var resultRgba = new Mat();
+        CvInvoke.BitwiseAnd(inputImage, inputImage, resultRgba, mask);
+        using var resultRgb = new Mat();
+        CvInvoke.CvtColor(resultRgba, resultRgb, ColorConversion.Rgba2Rgb);
+        return resultRgb.Clone();
     }
 }

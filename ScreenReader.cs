@@ -1,6 +1,8 @@
 using System.Numerics;
 using HPPH;
-using OpenCvSharp;
+using Emgu.CV;
+using Emgu.CV.CvEnum;
+
 namespace PubgOverlay;
 using ScreenCapture.NET;
 
@@ -28,7 +30,7 @@ public class ScreenReader
         var display = ScreenCaptureService.GetDisplays(ScreenCaptureService.GetGraphicsCards().First()).First();
         return (display.Width, display.Height);
     }
-    static ICaptureZone BigCaptureZone;
+    private static readonly ICaptureZone BigCaptureZone;
     
     public static Mat Capture(int beginX, int beginY, int sizeX, int sizeY)
     {
@@ -51,12 +53,12 @@ public class ScreenReader
         using (BigCaptureZone.Lock())
         {
             var image = BigCaptureZone.Image.AsRefImage<ColorBGRA>();
-            var mat = new Mat(image.Height, image.Width, MatType.CV_8UC4);
+            var matrix = new Mat(image.Height, image.Width, DepthType.Cv8U, ColorBGRA.ColorFormat.BytesPerPixel);
             unsafe
             {
-                image.CopyTo(new Span<ColorBGRA>(mat.DataPointer, image.Width * image.Height));
+                image.CopyTo(new Span<ColorBGRA>((void*)matrix.DataPointer, image.Width * image.Height));
             }
-            return mat;
+            return matrix;
         }
     }
 }

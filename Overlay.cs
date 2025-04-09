@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -62,7 +63,7 @@ internal class PubgOverlayRenderer : Overlay
     protected override Task PostInitialized()
     {
         var screenSize = ScreenReader.GetDisplaySize();
-        Size = new System.Drawing.Size(screenSize.width, screenSize.height);
+        Size = new Size(screenSize.width, screenSize.height);
         return Task.CompletedTask;
     }
 
@@ -236,7 +237,7 @@ internal class PubgOverlayRenderer : Overlay
                     lock (this)
                     {
                         _distance = (float)result.Value.distance / 1.08f / (smallMap ? 0.6f : 1.0f);
-                        var mapPos = OpenCvManager.MapPos * (smallMap ? 1 : 0);
+                        var mapPos = smallMap ? OpenCvManager.MapPos : Point.Empty;
                         _playerPos = result.Value.playerPos + new Vector2(mapPos.X, mapPos.Y);
                         _targetPos = result.Value.targetPos + new Vector2(mapPos.X, mapPos.Y);
                     }

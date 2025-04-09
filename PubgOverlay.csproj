@@ -11,13 +11,13 @@
 
     <ItemGroup>
       <PackageReference Include="ClickableTransparentOverlay" Version="11.1.0" />
+      <PackageReference Include="Emgu.CV" Version="4.10.0.5680" />
+      <PackageReference Include="Emgu.CV.runtime.windows" Version="4.10.0.5680" />
       <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
       <PackageReference Include="Nerdbank.GitVersioning" Version="3.8.38-alpha">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
-      <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108" />
       <PackageReference Include="ScreenCapture.NET" Version="3.0.0" />
       <PackageReference Include="ScreenCapture.NET.DX11" Version="3.0.0" />
     </ItemGroup>
