@@ -51,8 +51,8 @@ public class OpenCvManager
     {
         using var playerTemplate = GetTemplate(1, playerIndex);
         using var targetTemplate = GetTemplate(2, targetIndex);
-        var beginX = fullScreen ? 0 : MapPos.X;
-        var beginY = fullScreen ? 0 : MapPos.Y;
+        var beginX = fullScreen ? 100 : MapPos.X;
+        var beginY = fullScreen ? 100 : MapPos.Y;
         var sizeX = fullScreen ? size.Height : MapSize.Width;
         var sizeY = fullScreen ? size.Width : MapSize.Height;
 
