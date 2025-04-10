@@ -1,12 +1,8 @@
 ﻿using ClickableTransparentOverlay;
 using PubgOverlay;
 using PubgOverlay.uiaccess;
-using System;
-using System.Net.Http;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 string? updateUrl = null;
 {
@@ -25,7 +21,8 @@ string? updateUrl = null;
     try
     {
         var response = await httpClient.GetStringAsync(apiUrl);
-        var release = JsonSerializer.Deserialize<GitHubRelease>(response);
+        var options = new JsonSerializerOptions { TypeInfoResolver = GitHubReleaseContext.Default };
+        var release = JsonSerializer.Deserialize<GitHubRelease>(response, options);
         if (release != null)
         {
             var latestVersion = new Version(release.TagName.Replace("v", ""));
@@ -73,11 +70,14 @@ if (isUiAccess)
         return;
     }
 }
-
 using var overlay = new PubgOverlayRenderer(hideSettingsOnDisable, updateUrl);
 overlay.ReplaceFont("assets/font.ttf", 15, FontGlyphRangeType.ChineseFull);
 await overlay.Run();
 
+
+[JsonSourceGenerationOptions(WriteIndented = false)]
+[JsonSerializable(typeof(GitHubRelease))]
+internal partial class GitHubReleaseContext : JsonSerializerContext;
 
 public class GitHubRelease
 {
