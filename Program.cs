@@ -1,7 +1,6 @@
 ﻿using ClickableTransparentOverlay;
 using PubgOverlay;
 using PubgOverlay.uiaccess;
-
 using System;
 using System.Net.Http;
 using System.Reflection;
@@ -12,19 +11,15 @@ using System.Threading.Tasks;
 string? updateUrl = null;
 {
     Console.WriteLine("正在检测更新...");
-    // 获取当前应用程序的版本号
-    var currentVersion = Assembly.GetEntryAssembly()?.GetName().Version;
-    if (currentVersion == null)
-    {
-        Console.WriteLine("无法获取当前版本号。");
-        return;
-    }
-    Console.WriteLine($"当前版本：{currentVersion}");
+    Console.WriteLine($"当前版本：{UpdateHelper.CurrentVersion}");
 
     // 访问 GitHub API 获取最新发布信息
     const string owner = "ChickenPige0n";
     const string repo = "PUBG-Overlay";
-    const string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
+    // 硬编码了AccessToken，别搞o(╥﹏╥)o
+    // ReSharper disable once StringLiteralTypo
+    const string apiUrl =
+        $"https://api.gitcode.com/api/v5/repos/{owner}/{repo}/releases/latest?access_token=M7MBrsiAhLWYELNhzGnB8bGx";
     using var httpClient = new HttpClient();
     httpClient.DefaultRequestHeaders.Add("User-Agent", "C# App");
     try
@@ -34,11 +29,22 @@ string? updateUrl = null;
         if (release != null)
         {
             var latestVersion = new Version(release.TagName.Replace("v", ""));
-            if (latestVersion > currentVersion)
+            if (latestVersion > UpdateHelper.CurrentVersion)
             {
                 Console.WriteLine($"发现新版本：{release.TagName}，请访问以下链接下载更新：");
-                Console.WriteLine(release.HtmlUrl);
-                updateUrl = release.HtmlUrl;
+                Console.WriteLine("https://gitcode.com/ChickenPige0n/PUBG-Overlay/releases");
+                foreach (var asset in release.Assets.Where(asset => asset.Type != "source"))
+                {
+                    if (asset.Name.EndsWith("win-x64.zip", StringComparison.OrdinalIgnoreCase))
+                    {
+                        updateUrl = asset.BrowserDownloadUrl;
+                        Console.WriteLine($"下载链接：{updateUrl}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"其他文件：{asset.Name} - {asset.BrowserDownloadUrl}");
+                    }
+                }
             }
             else
             {
@@ -67,6 +73,7 @@ if (isUiAccess)
         return;
     }
 }
+
 using var overlay = new PubgOverlayRenderer(hideSettingsOnDisable, updateUrl);
 overlay.ReplaceFont("assets/font.ttf", 15, FontGlyphRangeType.ChineseFull);
 await overlay.Run();
@@ -74,8 +81,15 @@ await overlay.Run();
 
 public class GitHubRelease
 {
-    [JsonPropertyName("tag_name")]
-    public required string TagName { get; set; }
-    [JsonPropertyName("html_url")]
-    public required string HtmlUrl { get; set; }
+    [JsonPropertyName("tag_name")] public required string TagName { get; set; }
+    [JsonPropertyName("assets")] public required List<ReleaseAsset> Assets { get; set; }
+
+    public class ReleaseAsset
+    {
+        [JsonPropertyName("browser_download_url")]
+        public required string BrowserDownloadUrl { get; set; }
+
+        [JsonPropertyName("name")] public required string Name { get; set; }
+        [JsonPropertyName("type")] public string? Type { get; set; }
+    }
 }

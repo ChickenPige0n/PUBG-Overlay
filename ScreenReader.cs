@@ -4,13 +4,14 @@ using Emgu.CV;
 using Emgu.CV.CvEnum;
 
 namespace PubgOverlay;
+
 using ScreenCapture.NET;
 
 public class ScreenReader
 {
-    
     public static ScreenReader Instance { get; } = new();
     private static readonly IScreenCaptureService ScreenCaptureService;
+
     static ScreenReader()
     {
         ScreenCaptureService = new DX11ScreenCaptureService();
@@ -30,13 +31,14 @@ public class ScreenReader
         var display = ScreenCaptureService.GetDisplays(ScreenCaptureService.GetGraphicsCards().First()).First();
         return (display.Width, display.Height);
     }
+
     private static readonly ICaptureZone BigCaptureZone;
-    
+
     public static Mat Capture(int beginX, int beginY, int sizeX, int sizeY)
     {
         // Get all available graphics cards
         var graphicsCards = ScreenCaptureService.GetGraphicsCards();
-        
+
         // Get the displays from the graphics card(s) you are interested in
         var displays = ScreenCaptureService.GetDisplays(graphicsCards.First());
 
@@ -46,9 +48,9 @@ public class ScreenReader
         // Capture the screen
         // This should be done in a loop on a separate thread as CaptureScreen blocks if the screen is not updated (still image).
         screenCapture.CaptureScreen();
-        
+
         // Do something with the captured image - e.g. access all pixels (same could be done with topLeft)
-        
+
         //Lock the zone to access the data. Remember to dispose the returned disposable to unlock again.
         using (BigCaptureZone.Lock())
         {
@@ -58,6 +60,7 @@ public class ScreenReader
             {
                 image.CopyTo(new Span<ColorBGRA>((void*)matrix.DataPointer, image.Width * image.Height));
             }
+
             return matrix;
         }
     }

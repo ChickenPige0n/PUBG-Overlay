@@ -42,6 +42,7 @@ public class OpenCvManager
         Player = 1,
         Target = 2
     }
+
     public Mat GetTemplate(TemplateType type, int index)
     {
         return type switch
