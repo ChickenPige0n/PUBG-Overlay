@@ -39,6 +39,7 @@ public class UpdateHelper
             }
 
             await Task.Run(() => System.IO.Compression.ZipFile.ExtractToDirectory(tempPath, extractPath));
+            File.Delete(tempPath);
 
             Console.WriteLine($"Extracted {fileName} to {extractPath}");
 
@@ -70,11 +71,9 @@ public class UpdateHelper
                                  robocopy "!src!" "!dst!" /s /e
                                  if errorlevel 8 echo 复制失败！请检查源目录和目标目录是否存在！ & pause & exit /b
 
-                                 :: 删除临时压缩包
-                                 del "C:\Users\23369\AppData\Local\Temp\PUBG-Overlay-1.3.0-win-x64.zip"
 
                                  :: 删除脚本本身（可选）
-                                 :: del "%~f0"
+                                 del "%~f0"
 
                                  echo 操作完成！
                                  pause
