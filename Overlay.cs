@@ -124,10 +124,12 @@ internal class PubgOverlayRenderer : Overlay
                 _targetTeam = _targetTeam == 4 ? 1 : _targetTeam + 1;
             }
 
-            if (ImGui.Button("大地图开始识别(K)"))
+            if (ImGui.Button("自动识别(K)"))
             {
                 QueueRecognize();
             }
+            ImGui.SameLine();
+            ImGui.Text($"版本: {UpdateHelper.CurrentVersion}");
 
             if (_updateUrl != null)
             {
@@ -165,7 +167,7 @@ internal class PubgOverlayRenderer : Overlay
 
         if (!_recognizeTask.IsCompleted)
         {
-            drawList.AddLine(Vector2.Zero, new Vector2(Size.Width, 0), GetColor(_playerTeam), 3);
+            drawList.AddLine(Vector2.Zero, new Vector2(Size.Width, 0), GetColor(_playerTeam), 12);
         }
 
         if (_playerPos.HasValue)
