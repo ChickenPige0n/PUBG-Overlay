@@ -1,4 +1,5 @@
-﻿using ClickableTransparentOverlay;
+﻿using System.Runtime.InteropServices;
+using ClickableTransparentOverlay;
 using PubgOverlay;
 using PubgOverlay.uiaccess;
 using System.Text.Json;
@@ -21,7 +22,11 @@ string? updateUrl = null;
     try
     {
         var response = await httpClient.GetStringAsync(apiUrl);
-        var options = new JsonSerializerOptions { TypeInfoResolver = GitHubReleaseContext.Default };
+        var options = new JsonSerializerOptions 
+        { 
+            TypeInfoResolver = GitHubReleaseContext.Default,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull // Add this for better trimming compatibility
+        };
         var release = JsonSerializer.Deserialize<GitHubRelease>(response, options);
         if (release != null)
         {
@@ -77,8 +82,9 @@ await overlay.Run();
 
 [JsonSourceGenerationOptions(WriteIndented = false)]
 [JsonSerializable(typeof(GitHubRelease))]
+[JsonSerializable(typeof(GitHubRelease.ReleaseAsset))]
 internal partial class GitHubReleaseContext : JsonSerializerContext;
-
+[StructLayout(LayoutKind.Sequential)]
 public class GitHubRelease
 {
     [JsonPropertyName("tag_name")] public required string TagName { get; set; }

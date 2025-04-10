@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Directives>
+<Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
     <Application>
-        <Assembly Name="System.Private.CoreLib">
-            <Type Name="System.Text.Json.JsonSerializer" Dynamic="Required All" />
-        </Assembly>
-        <Assembly Name="System.Text.Json">
-            <Type Name="System.Text.Json.Serialization.JsonSerializerContext" Dynamic="Required All" />
-        </Assembly>
-        <Assembly Name="PubgOverlay">
-            <Type Name="PubgOverlay.GitHubRelease" Dynamic="Required All" />
-            <Type Name="PubgOverlay.GitHubRelease+ReleaseAsset" Dynamic="Required All" />
-            <Type Name="PubgOverlay.GitHubReleaseContext" Dynamic="Required All" />
-        </Assembly>
+        <Assembly Name="PubgOverlay" Dynamic="Required All" />
     </Application>
 </Directives>

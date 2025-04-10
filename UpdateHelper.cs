@@ -6,7 +6,7 @@ namespace PubgOverlay;
 public class UpdateHelper
 {
     [SuppressMessage("Usage", "CA2211:非常量字段应当不可见")]
-    public static Version CurrentVersion = new(1, 6, 0, 0);
+    public static Version CurrentVersion = new(1, 6, 3, 0);
 
     public static async void Update(string url, IProgress<float> progress)
     {
@@ -20,7 +20,7 @@ public class UpdateHelper
             {
                 File.Delete(tempPath);
             }
-
+            
             // 下载文件
             var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
             await client.DownloadAsync(url, fs, progress);
@@ -30,7 +30,9 @@ public class UpdateHelper
 
             // 解压文件
             var extractPath = Path.Combine(Path.GetTempPath(), "PUBG-Overlay");
-            var destPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var selfProcess = Process.GetCurrentProcess();
+            var destPath = Path.GetDirectoryName(Environment.ProcessPath);
+            Console.WriteLine($"destPath: {destPath}");
             if (Directory.Exists(extractPath))
             {
                 Directory.Delete(extractPath, true);
@@ -50,7 +52,7 @@ public class UpdateHelper
                                  setlocal enableDelayedExpansion
 
 
-                                 set "ProcessName={Process.GetCurrentProcess().ProcessName}"  REM 替换为你要等待的进程名称
+                                 set "ProcessName={selfProcess.ProcessName}"  REM 替换为你要等待的进程名称
                                  :WaitForProcess
                                  tasklist /FI "IMAGENAME eq %ProcessName%" 2>nul | find /I "%ProcessName%" >nul
                                  if "%ERRORLEVEL%"=="0" (
