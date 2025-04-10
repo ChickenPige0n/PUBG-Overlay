@@ -133,9 +133,9 @@ internal class PubgOverlayRenderer : Overlay
 
             if (_updateUrl != null)
             {
-                ImGui.Text("检测到新版本");
+                ImGui.Text(_downloadProgress.HasValue ? "下载中" : "检测到新版本");
                 ImGui.SameLine();
-                if (ImGui.Button("去下载"))
+                if (ImGui.Button("更新"))
                 {
                     _downloadProgress = 0;
                     var progress = new Progress<float>(p => { _downloadProgress = p; });

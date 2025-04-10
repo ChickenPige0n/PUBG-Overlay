@@ -8,7 +8,7 @@ namespace PubgOverlay;
 public class UpdateHelper
 {
     [SuppressMessage("Usage", "CA2211:非常量字段应当不可见")]
-    public static Version CurrentVersion = new(1, 5, 2, 0);
+    public static Version CurrentVersion = new(1, 5, 3, 0);
 
     public static async void Update(string url, IProgress<float> progress)
     {
