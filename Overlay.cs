@@ -157,6 +157,28 @@ internal class PubgOverlayRenderer : Overlay
             ImGui.Text($"距离: {_distance:F2} 米");
         }
         ImGui.End();
+        
+
+        if (KeyJustPressed(KeyEnum.K))
+            QueueRecognize();
+
+        if (KeyJustPressed(KeyEnum.U))
+        {
+            Console.WriteLine($"showSettings: {_showSettings}");
+            _showSettings = !_showSettings;
+        }
+
+        if (IsDown(KeyEnum.J))
+        {
+            _testStartPos ??= ImGui.GetMousePos();
+            drawList.AddLine(_testStartPos.Value, ImGui.GetMousePos(), 0xFFFFFFFF, 2f);
+            _distance = (_testStartPos.Value - ImGui.GetMousePos()).Length() / 1.08f;
+        }
+        else
+        {
+            _testStartPos = null;
+        }
+        
 
 
         if (_recognizeTask.IsCompleted && _timer > 80)
@@ -217,31 +239,12 @@ internal class PubgOverlayRenderer : Overlay
             _playerPos = null;
             _targetPos = null;
         }
-
-        if (KeyJustPressed(KeyEnum.K))
-            QueueRecognize();
-
-        if (KeyJustPressed(KeyEnum.U))
-        {
-            Console.WriteLine($"showSettings: {_showSettings}");
-            _showSettings = !_showSettings;
-        }
-
+        
         var clickable = (WindowExStyles)GetWindowLong(window.Handle, (int)WindowLongParam.GWL_EXSTYLE);
         var notClickable = clickable | WindowExStyles.WS_EX_LAYERED | WindowExStyles.WS_EX_TRANSPARENT;
-        SetWindowLongPtr(window.Handle, (int)WindowLongPtr.GwlExstyle,
-            _showSettings ? (int)clickable : (int)notClickable);
+        // SetWindowLongPtr(window.Handle, (int)WindowLongPtr.GwlExstyle,
+        //     _showSettings ? (int)clickable : (int)notClickable);
 
-        if (IsDown(KeyEnum.J))
-        {
-            _testStartPos ??= ImGui.GetMousePos();
-            drawList.AddLine(_testStartPos.Value, ImGui.GetMousePos(), 0xFFFFFFFF, 2f);
-            _distance = (_testStartPos.Value - ImGui.GetMousePos()).Length() / 1.08f;
-        }
-        else
-        {
-            _testStartPos = null;
-        }
     }
 
     private void QueueRecognize(bool smallMap = false)
@@ -255,10 +258,11 @@ internal class PubgOverlayRenderer : Overlay
             _recognizeTask.Wait();
         }
 
-        _recognizeTask = Task.Run(() =>
+        _recognizeTask = Task.Run(async () =>
         {
             try
             {
+                await Task.Delay(100);
                 var result = _openCvManager.GetDistance(_playerTeam - 1, _targetTeam - 1, Size, !smallMap);
                 GC.Collect();
                 if (result.HasValue)

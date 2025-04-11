@@ -68,35 +68,37 @@ public class OpenCvManager
     {
         using var playerTemplate = GetTemplate(TemplateType.Player, playerIndex);
         using var targetTemplate = GetTemplate(TemplateType.Target, targetIndex);
-        var beginX = fullScreen ? 100 : MapPos.X;
-        var beginY = fullScreen ? 100 : MapPos.Y;
-        var sizeX = fullScreen ? size.Height : MapSize.Width;
-        var sizeY = fullScreen ? size.Width : MapSize.Height;
+        var capOffset = new Size(100, 100);
+        var beginX = fullScreen ? capOffset.Width : MapPos.X;
+        var beginY = fullScreen ? capOffset.Height : MapPos.Y;
+        var sizeX = fullScreen ? size.Width - capOffset.Width : MapSize.Width;
+        var sizeY = fullScreen ? size.Height - capOffset.Height : MapSize.Height;
 
         var mapMat = ScreenReader.Capture(beginX, beginY, sizeX, sizeY);
+        
         using var leachedMap = LeachColor(mapMat);
-
+        using var leachedMap1 = leachedMap.Clone();
         using var playerResultMat = new Mat();
         CvInvoke.MatchTemplate(leachedMap, playerTemplate, playerResultMat, TemplateMatchingType.CcoeffNormed);
-        var minVal = 0.0;
-        var minLoc = new Point();
+        
+        var playerMinLoc = new Point();
+        var playerMinVal = 0.0;
+        
         var playerMaxLoc = new Point();
         var playerMax = 0.0;
-        CvInvoke.MinMaxLoc(playerResultMat, ref minVal, ref playerMax, ref minLoc, ref playerMaxLoc);
+        CvInvoke.MinMaxLoc(playerResultMat, ref playerMinVal, ref playerMax, ref playerMinLoc, ref playerMaxLoc);
 
         using var targetResultMat = new Mat();
-        CvInvoke.MatchTemplate(leachedMap, targetTemplate, targetResultMat, TemplateMatchingType.CcoeffNormed);
-
+        CvInvoke.MatchTemplate(leachedMap1, targetTemplate, targetResultMat, TemplateMatchingType.CcoeffNormed);
+        
+        var targetMinLoc = new Point();
+        var targetMinVal = 0.0;
+        
         var targetMaxLoc = new Point();
         var targetMax = 0.0;
-        CvInvoke.MinMaxLoc(targetResultMat, ref minVal, ref targetMax, ref minLoc, ref targetMaxLoc);
+        CvInvoke.MinMaxLoc(targetResultMat, ref targetMinVal, ref targetMax, ref targetMinLoc, ref targetMaxLoc);
 
         mapMat.Dispose();
-
-        if (targetMax < 0.5 || playerMax < 0.5)
-        {
-            return null;
-        }
 
         if (targetMax < 0.5 || playerMax < 0.5)
         {
@@ -109,13 +111,13 @@ public class OpenCvManager
         pOffset.X /= 2;
         var playerPos = new Point
         {
-            X = playerMaxLoc.X + (int)Math.Round(pOffset.X),
-            Y = playerMaxLoc.Y + (int)Math.Round(pOffset.Y)
+            X = playerMaxLoc.X + (int)Math.Round(pOffset.X) + capOffset.Width,
+            Y = playerMaxLoc.Y + (int)Math.Round(pOffset.Y) + capOffset.Height
         };
         var targetPos = new Point
         {
-            X = targetMaxLoc.X + (int)Math.Round(tOffset.X),
-            Y = targetMaxLoc.Y + (int)Math.Round(tOffset.Y)
+            X = targetMaxLoc.X + (int)Math.Round(tOffset.X) + capOffset.Width,
+            Y = targetMaxLoc.Y + (int)Math.Round(tOffset.Y) + capOffset.Height
         };
         // TODO: support different screen resolution
         // var scaleFactor = new Vector2(size.Width, size.Height) / new Vector2(1920, 1080);
