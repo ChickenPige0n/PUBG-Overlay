@@ -18,7 +18,7 @@ public class ScreenReader
     {
         ScreenCaptureService = new DX11ScreenCaptureService();
         var size = GetDisplaySize();
-        SetCaptureZone(100, 100, size.width - 100, size.height - 100);
+        SetCaptureZone(0,0, size.width, size.height);
     }
 
     public static void SetCaptureZone(int x, int y, int w, int h)
@@ -29,7 +29,8 @@ public class ScreenReader
         // Get the displays from the graphics card(s) you are interested in
         var displays = ScreenCaptureService.GetDisplays(graphicsCards.First());
         var screenCapture = ScreenCaptureService.GetScreenCapture(displays.First());
-        screenCapture.UnregisterCaptureZone(_captureZone);
+        if (_captureZone != null)
+            screenCapture.UnregisterCaptureZone(_captureZone);
         // Register a capture zone for the entire screen
         _captureZone = screenCapture.RegisterCaptureZone(x, y, w, h);
         _captureSize = (x, y, w, h);
@@ -41,7 +42,7 @@ public class ScreenReader
         return (display.Width, display.Height);
     }
 
-    private static ICaptureZone _captureZone = null!;
+    private static ICaptureZone? _captureZone;
 
     public static Mat Capture(int beginX, int beginY, int sizeX, int sizeY)
     {
