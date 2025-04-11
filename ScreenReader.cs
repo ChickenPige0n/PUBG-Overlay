@@ -10,7 +10,7 @@ using ScreenCapture.NET;
 public class ScreenReader
 {
     public static ScreenReader Instance { get; } = new();
-    static int count = 0;
+    // static int count = 0;
     private static readonly IScreenCaptureService ScreenCaptureService;
     private static (int x, int y, int w, int h) _captureSize;
 
@@ -29,6 +29,7 @@ public class ScreenReader
         // Get the displays from the graphics card(s) you are interested in
         var displays = ScreenCaptureService.GetDisplays(graphicsCards.First());
         var screenCapture = ScreenCaptureService.GetScreenCapture(displays.First());
+        screenCapture.UnregisterCaptureZone(_captureZone);
         // Register a capture zone for the entire screen
         _captureZone = screenCapture.RegisterCaptureZone(x, y, w, h);
         _captureSize = (x, y, w, h);
@@ -76,8 +77,8 @@ public class ScreenReader
                 image.CopyTo(new Span<ColorBGRA>((void*)matrix.DataPointer, image.Width * image.Height));
             }
 
-            matrix.Save($"assets/screenshoot_{count}.png");
-            count++;
+            //matrix.Save($"assets/screenshoot_{count}.png");
+            // count++;
             return matrix;
         }
     }
