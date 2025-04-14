@@ -14,28 +14,27 @@ public class OpenCvManager
     public static readonly Size MapSize = new(457, 457);
     public static readonly CudaTemplateMatching Matcher = new(DepthType.Cv8U, 3, TemplateMatchingType.CcoeffNormed);
 
-    public List<GpuMat> PlayerTemplatesGpu { get; }
-    public List<GpuMat> TargetTemplatesGpu { get; }
+    public List<Mat> PlayerTemplates { get; set; }
+    public List<Mat> TargetTemplates { get; set; }
 
     public OpenCvManager()
     {
         using var allPersonMat = CvInvoke.Imread($"assets/persons_1K.png");
-        PlayerTemplatesGpu =
+        PlayerTemplates =
         [
-            new GpuMat(new Mat(allPersonMat, new Rectangle(0 , 0, 18, 18))),
-            new GpuMat(new Mat(allPersonMat, new Rectangle(18, 0, 18, 18))),
-            new GpuMat(new Mat(allPersonMat, new Rectangle(36, 0, 18, 18))),
-            new GpuMat(new Mat(allPersonMat, new Rectangle(54, 0, 18, 18)))
+            new Mat(allPersonMat, new Rectangle(0 , 0, 18, 18)),
+            new Mat(allPersonMat, new Rectangle(18, 0, 18, 18)),
+            new Mat(allPersonMat, new Rectangle(36, 0, 18, 18)),
+            new Mat(allPersonMat, new Rectangle(54, 0, 18, 18))
         ];
         using var allPointMat = CvInvoke.Imread($"assets/points_1K.png");
-        TargetTemplatesGpu =
+        TargetTemplates =
         [
-            new GpuMat(new Mat(allPointMat, new Rectangle(0 , 0, 16, 20))),
-            new GpuMat(new Mat(allPointMat, new Rectangle(16, 0, 16, 20))),
-            new GpuMat(new Mat(allPointMat, new Rectangle(32, 0, 16, 20))),
-            new GpuMat(new Mat(allPointMat, new Rectangle(48, 0, 16, 20)))
+            new Mat(allPointMat, new Rectangle(0 , 0, 16, 20)),
+            new Mat(allPointMat, new Rectangle(16, 0, 16, 20)),
+            new Mat(allPointMat, new Rectangle(32, 0, 16, 20)),
+            new Mat(allPointMat, new Rectangle(48, 0, 16, 20))
         ];
-        // download
     }
 
     public enum TemplateType
@@ -48,28 +47,28 @@ public class OpenCvManager
     {
         return type switch
         {
-            TemplateType.Player => PlayerTemplatesGpu[index],
-            TemplateType.Target => TargetTemplatesGpu[index],
+            TemplateType.Player => new GpuMat(PlayerTemplates[index]),
+            TemplateType.Target => new GpuMat(TargetTemplates[index]),
             _ => new GpuMat()
         };
     }
 
     public Vector2 PlayerTemplateSize(int team)
     {
-        return S2V(new Size(PlayerTemplatesGpu[team].Size.Width, PlayerTemplatesGpu[team].Size.Height));
+        return S2V(new Size(PlayerTemplates[team].Size.Width, PlayerTemplates[team].Size.Height));
     }
 
     public Vector2 TargetTemplateSize(int team)
     {
-        return S2V(new Size(TargetTemplatesGpu[team].Size.Width, TargetTemplatesGpu[team].Size.Height));
+        return S2V(new Size(TargetTemplates[team].Size.Width, TargetTemplates[team].Size.Height));
     }
 
     public (double distance, Vector2 playerPos, Vector2 targetPos)? GetDistance(int playerIndex, int targetIndex,
         Size size, bool fullScreen = false)
     {
         using var scope = new ScopeTimer("GetDistance");
-        using var playerTemplate = GetTemplateGpu(TemplateType.Player, playerIndex);
-        using var targetTemplate = GetTemplateGpu(TemplateType.Target, targetIndex);
+        using var playerTemplateGpu = GetTemplateGpu(TemplateType.Player, playerIndex);
+        using var targetTemplateGpu = GetTemplateGpu(TemplateType.Target, targetIndex);
         var capOffset = new Size(100, 100);
         var beginX = fullScreen ? capOffset.Width : MapPos.X;
         var beginY = fullScreen ? capOffset.Height : MapPos.Y;
@@ -83,8 +82,6 @@ public class OpenCvManager
         using var leachedMap = LeachColorGpu(mapMatCpu);
         using var leachedMapGpu = new GpuMat(leachedMap);
         Console.WriteLine(leachedMapGpu.NumberOfChannels);
-        using var playerTemplateGpu = new GpuMat(playerTemplate);
-        using var targetTemplateGpu = new GpuMat(targetTemplate);
         using var playerResultGpu = new GpuMat();
         using var targetResultGpu = new GpuMat();
         using (var _ = new ScopeTimer("MatchTemplate for player"))
