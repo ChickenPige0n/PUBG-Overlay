@@ -53,13 +53,12 @@ internal class PubgOverlayRenderer : Overlay
 
     private readonly string? _updateUrl;
 
-    public PubgOverlayRenderer(bool hideSettingOnDisable, string? updateUrl = null) : base(1920, 1080)
+    public PubgOverlayRenderer(bool hideSettingOnDisable, string? updateUrl = null) : base("Pubg overlay")
     {
         if (!string.IsNullOrEmpty(updateUrl))
         {
             _updateUrl = updateUrl;
         }
-
         _hideSettingsOnDisable = hideSettingOnDisable;
         _openCvManager = new OpenCvManager();
         _recognizeTask = Task.CompletedTask;

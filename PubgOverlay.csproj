@@ -9,10 +9,18 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="ClickableTransparentOverlay" Version="11.1.0" />
       <PackageReference Include="Emgu.CV" Version="4.10.0.5680" />
-      <PackageReference Include="Emgu.CV.runtime.windows" Version="4.10.0.5680" />
+      <PackageReference Include="Emgu.CV.runtime.windows.cuda" Version="4.4.0.4099" />
       <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
       <PackageReference Include="ScreenCapture.NET" Version="3.0.0" />
       <PackageReference Include="ScreenCapture.NET.DX11" Version="3.0.0" />
@@ -29,6 +37,9 @@
     </ItemGroup>
     <ItemGroup>
         <RdXmlFile Include="rd.xml" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="PerfUtils.cs" />
     </ItemGroup>
 
 

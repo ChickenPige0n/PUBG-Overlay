@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Numerics;
 using HPPH;
 using Emgu.CV;
+using Emgu.CV.Cuda;
 using Emgu.CV.CvEnum;
 
 namespace PubgOverlay;
@@ -23,6 +25,7 @@ public class ScreenReader
 
     public static void SetCaptureZone(int x, int y, int w, int h)
     {
+        using var scope = new ScopeTimer("SetCaptureZone");
         Console.WriteLine($"set capture zone: {x}, {y}, {w}, {h}");
         // Get all available graphics cards
         var graphicsCards = ScreenCaptureService.GetGraphicsCards();
@@ -44,8 +47,9 @@ public class ScreenReader
 
     private static ICaptureZone? _captureZone;
 
-    public static Mat Capture(int beginX, int beginY, int sizeX, int sizeY)
+    public static GpuMat Capture(int beginX, int beginY, int sizeX, int sizeY)
     {
+        using var scope = new ScopeTimer("Capture");
         if (beginX != _captureSize.x || beginY != _captureSize.y || sizeX != _captureSize.w || sizeY != _captureSize.h)
         {
             SetCaptureZone(beginX, beginY, sizeX, sizeY);
@@ -66,21 +70,20 @@ public class ScreenReader
         // Do something with the captured image - e.g. access all pixels (same could be done with topLeft)
 
         //Lock the zone to access the data. Remember to dispose the returned disposable to unlock again.
-        using (_captureZone.Lock())
+        using (_captureZone!.Lock())
         {
             var image = _captureZone.Image.AsRefImage<ColorBGRA>();
-            // save image as png 
-
-
             var matrix = new Mat(image.Height, image.Width, DepthType.Cv8U, ColorBGRA.ColorFormat.BytesPerPixel);
             unsafe
             {
                 image.CopyTo(new Span<ColorBGRA>((void*)matrix.DataPointer, image.Width * image.Height));
             }
-
+            using var bgraMat = new GpuMat(matrix);
+            var result = new GpuMat();
+            CudaInvoke.CvtColor(bgraMat, result, ColorConversion.Bgra2Rgb);
             //matrix.Save($"assets/screenshoot_{count}.png");
             // count++;
-            return matrix;
+            return result;
         }
     }
 }
